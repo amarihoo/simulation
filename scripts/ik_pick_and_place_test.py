@@ -326,6 +326,10 @@ def main():
 
     block_poses = list()
     #initial position of block
+    
+    # x+ is perpendicular to saywer arm
+    # y- is parallel to sawyer position
+    # z is table level
     block_poses.append(Pose(
         position=Point(x=0.45, y=0.155, z=-0.129),
         orientation=overhead_orientation)) #red block position
