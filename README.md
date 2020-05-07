@@ -16,6 +16,8 @@ replace the contents of the "sawyer_sim_examples" folder with the contents of th
 
 run $catkin_make in your workspace folder
 
+## run the package
+
 $roslaunch sawyer_sim_examples sawyer_pick_and_place_demo.launch
 
 (or in ROS Dev Studio, choose the launch file in the simulation launcher)
