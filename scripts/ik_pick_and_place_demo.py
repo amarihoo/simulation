@@ -42,7 +42,7 @@ from geometry_msgs.msg import (
 import intera_interface
 
 class PickAndPlace(object):
-    def __init__(self, limb="right", hover_distance = 0.15, tip_name="right_gripper_tip"):
+    def __init__(self, limb="right", hover_distance = 0.13, tip_name="right_gripper_tip"):
         self._limb_name = limb # string
         self._tip_name = tip_name # string
         self._hover_distance = hover_distance # in meters
@@ -235,31 +235,38 @@ def delete_gazebo_models():
     except rospy.ServiceException, e:
         print("Delete Model service call failed: {0}".format(e))
 
-# def getBlockPose():
+def getBlockPose():
     
-#     # im = cv2.imread('./table-view.png')
-#     # imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
-#     # ret,thresh = cv2.threshold(imgray,1,255,0)
+    im = cv2.imread('./table-view.png')
+    imgray = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
+    ret,thresh = cv2.threshold(imgray,1,255,0)
 
-#     overhead_orientation = Quaternion(
-#                              x=-0.00142460053167,
-#                              y=0.999994209902,
-#                              z=-0.00177030764765,
-#                              w=0.00253311793936)
-#     # TODO: get cv_image from subscriber
+    overhead_orientation = Quaternion(
+                             x=-0.00142460053167,
+                             y=0.999994209902,
+                             z=-0.00177030764765,
+                             w=0.00253311793936)
+    # TODO: get cv_image from subscriber
     
+    # Find contours, draw on image and save
+    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(im, contours, -1, (0,255,0), 3)
+    #cv2.imwrite('table-result.png',im)
 
-#     # # Convert to grayscale and threshold
+    for cnt in contours:
+        
+        object = cv2.minAreaRect(cnt)
+
+#         coordinates = object[0]
+#         dimensions = object[1]
+#         angle = object[-1]
     
+    block_posed = Pose(
+         position=Point(x=0.45, y=0.155, z=-0.129),
+         orientation=overhead_orientation)#pose of red block
+    
+    return block_posed
 
-#     # # Find contours, draw on image and save
-#     #im2, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-#     # #cv2.drawContours(im, contours, -1, (0,255,0), 3)
-#     # #cv2.imwrite('result1.png',im)
-
-#     # # Show user what we found
-#     # for cnt in contours:
-#     #     object = cv2.minAreaRect(cnt)
 #         #angle = object[-1]
 #         #if angle < -45:
 #         #    angle = (90 + angle)
@@ -267,17 +274,6 @@ def delete_gazebo_models():
 #         # it positive
 #         #else:
 #         #    angle = -angle
-    
-#   #coordinates = object[0]
-#    # image_x = 0.45
-#    # image_y = 0.155
-#     # block_posed = Pose(
-#     #        position=Point(x=image_x, y=image_y, z=-0.129),
-#     #        orientation=overhead_orientation)
-#     block_posed = Pose(
-#          position=Point(x=0.45, y=0.155, z=-0.129),
-#          orientation=overhead_orientation)
-#     return block_posed
 
 def main():
     """SDK Inverse Kinematics Pick and Place Example
@@ -307,7 +303,7 @@ def main():
     # sub = rospy.Subscriber("block_location", String)
 
     limb = 'right'
-    hover_distance = 0.15 # meters
+    hover_distance = 0.13 # meters
     # Starting Joint angles for right arm
     starting_joint_angles = {'right_j0': -0.041662954890248294,
                              'right_j1': -1.0258291091425074,
@@ -325,20 +321,19 @@ def main():
                              w=0.00253311793936)
 
     block_poses = list()
-    #initial position of block
-    block_poses.append(Pose(
-        position=Point(x=0.45, y=0.155, z=-0.129),
-        orientation=overhead_orientation)) #red block position
+    #initial position of red block
+    pose_target = getBlockPose()
+    block_poses.append(pose_target) 
     
+#     block_poses.append(Pose(
+#         position=Point(x=0.45, y=0.155, z=-0.129),
+#         orientation=overhead_orientation)) #red block position
     
     block_poses.append(Pose(
         position=Point(x=0.4225, y=-0.1265, z=0.7725), 
         orientation=overhead_orientation))#blue block position
-    #end position
-
-    #pose_target = getBlockPose()
-    #block_poses.append(pose_target)
     
+    #end position
     end_pose = Pose(
         position=Point(x=0.6, y=-0.1, z=-0.129),
         orientation=overhead_orientation)
@@ -349,17 +344,16 @@ def main():
     #idx = 1
     while not rospy.is_shutdown():
         #while block not moved
-        #if(block_poses):
-            #print("\nPicking...")
-            #updated position of block
-        pnp.pick(block_poses[0])
-            #print("\nPlacing...")
-        pnp.place(end_pose)
-        
-        pnp.pick(block_poses[1])
-        pnp.place(end_pose)
+        if(block_poses):
+            
+            pnp.pick(block_poses[0])
+            pnp.place(end_pose)
+            
+            pnp.pick(block_poses[1])
+            pnp.place(end_pose)
             #same end position
             #from image, update block_poses
+            block_poses = getBlockPose()
 
     return 0
 
