@@ -27,4 +27,5 @@ $roslaunch sawyer_sim_examples sawyer_pick_and_place_demo.launch
 code has only been tested in ROS Dev Studio
 
 ** note that all relevant work is in the scripts folder: -demo.py is complete adaptation, -test.py for simulation tests
+
 ** image processing in results
